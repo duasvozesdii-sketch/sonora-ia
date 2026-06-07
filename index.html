@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sonora IA — Músicas Personalizadas com Inteligência Artificial</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #fdf8ff;
+    --bg-alt:    #f9f2fe;
+    --bg-card:   #ffffff;
+
+    --lilac:     #b89fcc;
+    --lilac-mid: #9b7db8;
+    --lilac-deep:#7a5a99;
+
+    --rose:      #e8a8bc;
+    --rose-mid:  #d4819c;
+    --rose-deep: #b85e7a;
+
+    --green:     #8ec4a8;
+    --green-mid: #6aaa8c;
+    --green-deep:#4a8a6c;
+
+    --ink:       #2e2240;
+    --muted:     #9d90ae;
+    --border:    rgba(155, 125, 184, 0.2);
+
+    --gradient-hero: linear-gradient(135deg, #f0e8fa 0%, #fce8f0 50%, #e8f5ee 100%);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE TEXTURE ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.025;
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 6rem 2rem 4rem;
+    position: relative;
+    overflow: hidden;
+    background: var(--gradient-hero);
+  }
+
+  .hero-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(70px);
+    pointer-events: none;
+    opacity: 0.55;
+  }
+  .hero-blob-1 { width: 520px; height: 520px; background: #d9c4f0; top: -120px; left: -100px; }
+  .hero-blob-2 { width: 400px; height: 400px; background: #f5c0d4; bottom: -80px; right: -80px; }
+  .hero-blob-3 { width: 320px; height: 320px; background: #b8e4cc; top: 50%; right: 10%; transform: translateY(-50%); }
+
+  .hero-rings {
+    position: absolute;
+    width: 700px; height: 700px;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(155,125,184,0.18);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    animation: pulse-ring 4s ease-in-out infinite;
+  }
+  .ring:nth-child(1) { width: 280px; height: 280px; animation-delay: 0s; }
+  .ring:nth-child(2) { width: 430px; height: 430px; animation-delay: 0.9s; }
+  .ring:nth-child(3) { width: 580px; height: 580px; animation-delay: 1.8s; }
+  .ring:nth-child(4) { width: 700px; height: 700px; animation-delay: 2.7s; }
+
+  @keyframes pulse-ring {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.12; }
+  }
+
+  .hero-tag {
+    display: inline-block;
+    border: 1.5px solid var(--lilac);
+    color: var(--lilac-deep);
+    background: rgba(255,255,255,0.55);
+    font-size: 0.68rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    padding: 0.4rem 1.2rem;
+    border-radius: 100px;
+    margin-bottom: 2.5rem;
+    position: relative;
+    z-index: 2;
+    animation: fadeUp 0.8s ease both;
+    backdrop-filter: blur(4px);
+  }
+
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.8rem, 7.5vw, 6.5rem);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    position: relative;
+    z-index: 2;
+    animation: fadeUp 0.8s ease 0.15s both;
+  }
+  .hero-title .accent-lilac { color: var(--lilac-mid); font-style: italic; }
+  .hero-title .accent-rose  { color: var(--rose-mid); }
+  .hero-title .accent-green { color: var(--green-mid); }
+
+  .hero-sub {
+    max-width: 540px;
+    font-size: 1.05rem;
+    font-weight: 300;
+    color: rgba(46,34,64,0.6);
+    line-height: 1.8;
+    margin-top: 1.8rem;
+    position: relative;
+    z-index: 2;
+    animation: fadeUp 0.8s ease 0.3s both;
+  }
+
+  .hero-cta-group {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 3rem;
+    position: relative;
+    z-index: 2;
+    animation: fadeUp 0.8s ease 0.45s both;
+  }
+
+  .btn-primary {
+    background: var(--lilac-mid);
+    color: #fff;
+    padding: 0.9rem 2.2rem;
+    border-radius: 100px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 6px 24px rgba(155,125,184,0.35);
+  }
+  .btn-primary:hover { background: var(--lilac-deep); transform: translateY(-2px); box-shadow: 0 10px 28px rgba(155,125,184,0.4); }
+
+  .btn-ghost {
+    border: 1.5px solid rgba(46,34,64,0.2);
+    color: var(--ink);
+    background: rgba(255,255,255,0.5);
+    padding: 0.9rem 2.2rem;
+    border-radius: 100px;
+    font-weight: 400;
+    font-size: 0.95rem;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: border-color 0.2s, transform 0.2s;
+    backdrop-filter: blur(4px);
+  }
+  .btn-ghost:hover { border-color: var(--lilac-mid); transform: translateY(-2px); }
+
+  .hero-scroll {
+    position: absolute;
+    bottom: 2.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    animation: fadeIn 1s ease 1.2s both;
+  }
+  .scroll-line {
+    width: 1px; height: 48px;
+    background: linear-gradient(to bottom, var(--lilac-mid), transparent);
+    margin: 0 auto;
+    animation: scroll-grow 1.6s ease-in-out infinite;
+  }
+  @keyframes scroll-grow {
+    0%   { transform: scaleY(0); transform-origin: top; }
+    50%  { transform: scaleY(1); transform-origin: top; }
+    51%  { transform: scaleY(1); transform-origin: bottom; }
+    100% { transform: scaleY(0); transform-origin: bottom; }
+  }
+
+  /* ── WAVEFORM ── */
+  .waveform {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    justify-content: center;
+    margin: 3rem auto 0;
+    height: 40px;
+    position: relative;
+    z-index: 2;
+  }
+  .wave-bar {
+    width: 3px;
+    border-radius: 10px;
+    animation: wave 1.2s ease-in-out infinite;
+  }
+  .wave-bar:nth-child(3n+1) { background: var(--lilac); }
+  .wave-bar:nth-child(3n+2) { background: var(--rose); }
+  .wave-bar:nth-child(3n+3) { background: var(--green); }
+  .wave-bar:nth-child(odd)  { animation-delay: 0.2s; }
+  .wave-bar:nth-child(3n)   { animation-delay: 0.4s; }
+  .wave-bar:nth-child(4n)   { animation-delay: 0.6s; }
+  @keyframes wave {
+    0%, 100% { height: 8px; }
+    50%       { height: 32px; }
+  }
+
+  /* ── SECTION BASE ── */
+  section { padding: 7rem 2rem; }
+  .container { max-width: 1080px; margin: 0 auto; }
+
+  .section-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--lilac-mid);
+    margin-bottom: 0.8rem;
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.9rem, 3.8vw, 3rem);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 1.2rem;
+    color: var(--ink);
+  }
+  .section-title .tl { color: var(--lilac-mid); font-style: italic; }
+  .section-title .tr { color: var(--rose-mid); }
+  .section-title .tg { color: var(--green-mid); }
+
+  /* ── OCCASIONS ── */
+  .occasions { background: #fff; }
+
+  .occasions-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.2rem;
+    margin-top: 3.5rem;
+  }
+  @media (max-width: 860px) {
+    .occasions-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .occasion-card {
+    padding: 2.2rem 1.8rem;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .occasion-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 20px 20px 0 0;
+    transition: opacity 0.3s;
+    opacity: 0;
+  }
+  .occasion-card.c-lilac::before { background: var(--lilac-mid); }
+  .occasion-card.c-rose::before  { background: var(--rose-mid); }
+  .occasion-card.c-green::before { background: var(--green-mid); }
+  .occasion-card.c-lilac2::before{ background: var(--lilac); }
+
+  .occasion-card:hover { transform: translateY(-5px); box-shadow: 0 12px 36px rgba(155,125,184,0.12); border-color: var(--lilac); }
+  .occasion-card:hover::before { opacity: 1; }
+
+  .occasion-icon { font-size: 2rem; margin-bottom: 1rem; display: block; }
+  .occasion-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--ink);
+  }
+  .occasion-desc {
+    font-size: 0.87rem;
+    font-weight: 300;
+    color: rgba(46,34,64,0.55);
+    line-height: 1.7;
+  }
+
+  /* ── HOW IT WORKS ── */
+  .how { background: var(--bg-alt); }
+
+  .steps { margin-top: 3.5rem; display: flex; flex-direction: column; gap: 0; }
+  .step {
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    gap: 1.8rem;
+    padding: 2.2rem 0;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+  .step:last-child { border-bottom: none; }
+
+  .step-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 3rem;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .step:nth-child(1) .step-num { color: var(--lilac-mid); }
+  .step:nth-child(2) .step-num { color: var(--rose-mid); }
+  .step:nth-child(3) .step-num { color: var(--green-mid); }
+  .step:nth-child(4) .step-num { color: var(--lilac-mid); }
+
+  .step-content h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 0.45rem;
+    color: var(--ink);
+  }
+  .step-content p {
+    font-size: 0.88rem;
+    font-weight: 300;
+    color: rgba(46,34,64,0.55);
+    line-height: 1.75;
+    max-width: 500px;
+  }
+
+  /* ── GENRES ── */
+  .genres { background: #fff; }
+
+  .genres-marquee-wrap {
+    overflow: hidden;
+    margin-top: 2.8rem;
+    padding: 1.4rem 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .genres-track {
+    display: flex;
+    gap: 0.9rem;
+    animation: marquee 20s linear infinite;
+    width: max-content;
+  }
+  .genre-pill {
+    white-space: nowrap;
+    padding: 0.45rem 1.3rem;
+    border-radius: 100px;
+    font-size: 0.83rem;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    transition: transform 0.2s;
+    cursor: default;
+  }
+  .genre-pill:hover { transform: scale(1.05); }
+  .genre-pill.pl { background: #ede0f8; color: var(--lilac-deep); border: 1px solid #d8c5f0; }
+  .genre-pill.pr { background: #fce8f0; color: var(--rose-deep);  border: 1px solid #f0c8d8; }
+  .genre-pill.pg { background: #dff2e9; color: var(--green-deep); border: 1px solid #bce0ce; }
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  .genres-note {
+    margin-top: 2.2rem;
+    font-size: 0.88rem;
+    font-weight: 300;
+    color: rgba(46,34,64,0.5);
+    max-width: 460px;
+  }
+
+  /* ── PRICING ── */
+  .pricing { background: var(--bg-alt); }
+
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(275px, 1fr));
+    gap: 1.4rem;
+    margin-top: 3.5rem;
+  }
+
+  .price-card {
+    border-radius: 24px;
+    padding: 2.5rem 2rem;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    position: relative;
+    transition: transform 0.25s, box-shadow 0.25s;
+  }
+  .price-card:hover { transform: translateY(-5px); box-shadow: 0 16px 40px rgba(155,125,184,0.14); }
+
+  .price-card.featured-lilac {
+    border-color: var(--lilac-mid);
+    background: linear-gradient(145deg, #f8f2ff 0%, #fff 100%);
+    box-shadow: 0 8px 32px rgba(155,125,184,0.18);
+  }
+
+  .featured-badge {
+    position: absolute;
+    top: -14px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--lilac-mid);
+    color: #fff;
+    font-size: 0.63rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 0.32rem 1rem;
+    border-radius: 100px;
+    white-space: nowrap;
+  }
+
+  .price-stripe {
+    height: 4px;
+    border-radius: 100px;
+    margin-bottom: 1.8rem;
+  }
+  .ps-lilac { background: linear-gradient(90deg, var(--lilac), var(--lilac-mid)); }
+  .ps-rose  { background: linear-gradient(90deg, var(--rose),  var(--rose-mid)); }
+  .ps-green { background: linear-gradient(90deg, var(--green), var(--green-mid)); }
+
+  .price-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 0.35rem;
+  }
+  .pl-lilac { color: var(--lilac-mid); }
+  .pl-rose  { color: var(--rose-mid); }
+  .pl-green { color: var(--green-mid); }
+
+  .price-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.55rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 0.2rem;
+  }
+  .price-qty { font-size: 0.82rem; color: var(--muted); margin-bottom: 1.5rem; }
+
+  .price-value {
+    padding: 1.4rem 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+  }
+  .price-from {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.3rem;
+  }
+  .price-amount {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.6rem;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .price-amount sup { font-size: 1.1rem; vertical-align: super; }
+  .price-amount.pa-lilac { color: var(--lilac-mid); }
+  .price-amount.pa-rose  { color: var(--rose-mid); }
+  .price-amount.pa-green { color: var(--green-mid); }
+
+  .price-features {
+    list-style: none;
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .price-features li {
+    font-size: 0.86rem;
+    font-weight: 300;
+    color: rgba(46,34,64,0.65);
+    padding-left: 1.1rem;
+    position: relative;
+  }
+  .price-features li::before {
+    content: '·';
+    position: absolute; left: 0;
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+  .pf-lilac li::before { color: var(--lilac-mid); }
+  .pf-rose  li::before { color: var(--rose-mid); }
+  .pf-green li::before { color: var(--green-mid); }
+
+  .price-cta {
+    display: block;
+    text-align: center;
+    padding: 0.85rem;
+    border-radius: 100px;
+    font-weight: 500;
+    font-size: 0.9rem;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: all 0.2s;
+  }
+  .pc-lilac-solid  { background: var(--lilac-mid); color: #fff; box-shadow: 0 4px 16px rgba(155,125,184,0.35); }
+  .pc-lilac-solid:hover  { background: var(--lilac-deep); }
+  .pc-rose-outline { border: 1.5px solid var(--rose-mid); color: var(--rose-mid); }
+  .pc-rose-outline:hover { background: var(--rose-mid); color: #fff; }
+  .pc-green-outline{ border: 1.5px solid var(--green-mid); color: var(--green-mid); }
+  .pc-green-outline:hover{ background: var(--green-mid); color: #fff; }
+
+  /* ── DIFFERENTIALS ── */
+  .differentials { background: #fff; }
+
+  .diff-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 2.5rem;
+    margin-top: 3.5rem;
+  }
+  .diff-item {}
+  .diff-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    margin-bottom: 1rem;
+  }
+  .dd-l { background: var(--lilac-mid); }
+  .dd-r { background: var(--rose-mid); }
+  .dd-g { background: var(--green-mid); }
+
+  .diff-number {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.8rem;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 0.4rem;
+  }
+  .dn-l { color: var(--lilac-mid); }
+  .dn-r { color: var(--rose-mid); }
+  .dn-g { color: var(--green-mid); }
+
+  .diff-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 0.45rem;
+    color: var(--ink);
+  }
+  .diff-desc {
+    font-size: 0.84rem;
+    font-weight: 300;
+    color: rgba(46,34,64,0.5);
+    line-height: 1.7;
+  }
+
+  /* ── CTA FINAL ── */
+  .cta-final {
+    background: var(--gradient-hero);
+    text-align: center;
+    padding: 8rem 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-blob-1 { position: absolute; width: 400px; height: 400px; background: #d9c4f0; border-radius: 50%; filter: blur(80px); opacity: 0.4; top: -100px; left: -80px; }
+  .cta-blob-2 { position: absolute; width: 350px; height: 350px; background: #f5c0d4; border-radius: 50%; filter: blur(80px); opacity: 0.4; bottom: -80px; right: -60px; }
+
+  .cta-final h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 4.5vw, 3.6rem);
+    font-weight: 900;
+    line-height: 1.15;
+    max-width: 680px;
+    margin: 0 auto 1.2rem;
+    color: var(--ink);
+    position: relative; z-index: 2;
+  }
+  .cta-final p {
+    font-size: 1rem;
+    font-weight: 300;
+    color: rgba(46,34,64,0.6);
+    max-width: 420px;
+    margin: 0 auto 2.8rem;
+    line-height: 1.75;
+    position: relative; z-index: 2;
+  }
+  .cta-final-btns {
+    display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
+    position: relative; z-index: 2;
+  }
+  .delivery-tag {
+    margin-top: 2.5rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    position: relative; z-index: 2;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 2.5rem 2rem;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    background: #fff;
+  }
+  .footer-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--lilac-mid);
+    letter-spacing: 0.1em;
+    margin-bottom: 0.4rem;
+  }
+  footer p { font-size: 0.76rem; color: var(--muted); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp  { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    .step { grid-template-columns: 46px 1fr; gap: 0.9rem; }
+    .step-num { font-size: 2.2rem; }
+    .occasions-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-blob hero-blob-1"></div>
+  <div class="hero-blob hero-blob-2"></div>
+  <div class="hero-blob hero-blob-3"></div>
+  <div class="hero-rings">
+    <div class="ring"></div><div class="ring"></div>
+    <div class="ring"></div><div class="ring"></div>
+  </div>
+
+  <span class="hero-tag">✦ Música original · Inteligência artificial</span>
+
+  <h1 class="hero-title">
+    A trilha sonora<br>
+    <span class="accent-lilac">certa</span> para<br>
+    cada <span class="accent-rose">momento</span>
+  </h1>
+
+  <p class="hero-sub">
+    Músicas 100% originais, criadas com IA de última geração. Você descreve o contexto, escolhe o estilo — nós entregamos em até 48 horas.
+  </p>
+
+  <div class="hero-cta-group">
+    <a href="#pacotes" class="btn-primary">Ver pacotes</a>
+    <a href="#como-funciona" class="btn-ghost">Como funciona</a>
+  </div>
+
+  <div class="waveform" aria-hidden="true">
+    <div class="wave-bar" style="height:10px"></div>
+    <div class="wave-bar" style="height:20px"></div>
+    <div class="wave-bar" style="height:30px"></div>
+    <div class="wave-bar" style="height:16px"></div>
+    <div class="wave-bar" style="height:26px"></div>
+    <div class="wave-bar" style="height:12px"></div>
+    <div class="wave-bar" style="height:22px"></div>
+    <div class="wave-bar" style="height:8px"></div>
+    <div class="wave-bar" style="height:28px"></div>
+    <div class="wave-bar" style="height:18px"></div>
+    <div class="wave-bar" style="height:24px"></div>
+    <div class="wave-bar" style="height:14px"></div>
+    <div class="wave-bar" style="height:20px"></div>
+    <div class="wave-bar" style="height:10px"></div>
+    <div class="wave-bar" style="height:26px"></div>
+    <div class="wave-bar" style="height:16px"></div>
+    <div class="wave-bar" style="height:8px"></div>
+    <div class="wave-bar" style="height:22px"></div>
+    <div class="wave-bar" style="height:18px"></div>
+    <div class="wave-bar" style="height:30px"></div>
+    <div class="wave-bar" style="height:12px"></div>
+    <div class="wave-bar" style="height:20px"></div>
+  </div>
+
+  <div class="hero-scroll" aria-hidden="true"><div class="scroll-line"></div></div>
+</section>
+
+<!-- OCCASIONS -->
+<section class="occasions" id="ocasioes">
+  <div class="container">
+    <p class="section-label">Para quem é</p>
+    <h2 class="section-title">Um som para cada <span class="tl">contexto</span></h2>
+    <p style="font-size:0.93rem;font-weight:300;color:rgba(46,34,64,0.55);max-width:500px;line-height:1.75;">
+      Da celebração ao ambiente de trabalho — cada entrega é pensada para a situação específica que você descrever.
+    </p>
+    <div class="occasions-grid">
+      <div class="occasion-card c-lilac">
+        <span class="occasion-icon">🎂</span>
+        <h3 class="occasion-title">Aniversários</h3>
+        <p class="occasion-desc">Uma música única com o nome, a história e o estilo de quem você quer homenagear. Presente que ninguém vai esquecer.</p>
+      </div>
+      <div class="occasion-card c-rose">
+        <span class="occasion-icon">💛</span>
+        <h3 class="occasion-title">Suporte emocional</h3>
+        <p class="occasion-desc">Mensagens musicais de acolhimento, incentivo ou consolo. Para enviar a quem precisa ouvir que não está sozinho.</p>
+      </div>
+      <div class="occasion-card c-green">
+        <span class="occasion-icon">🏥</span>
+        <h3 class="occasion-title">Consultórios &amp; escritórios</h3>
+        <p class="occasion-desc">Trilha ambiente exclusiva para o espaço. Sem royalties, sem repetição cansativa, no tom certo para o seu público.</p>
+      </div>
+      <div class="occasion-card c-lilac2">
+        <span class="occasion-icon">🛒</span>
+        <h3 class="occasion-title">Negócios &amp; comércio</h3>
+        <p class="occasion-desc">Jingle, música de vitrine, trilha de vídeo institucional ou redes sociais. Identidade sonora que representa a sua marca.</p>
+      </div>
+      <div class="occasion-card c-green">
+        <span class="occasion-icon">🙏</span>
+        <h3 class="occasion-title">Encontros &amp; celebrações religiosas</h3>
+        <p class="occasion-desc">Músicas para cultos, células, retiros e momentos de fé. Tom respeitoso, letra com propósito — no estilo que a sua comunidade vai sentir.</p>
+      </div>
+      <div class="occasion-card c-rose">
+        <span class="occasion-icon">🌹</span>
+        <h3 class="occasion-title">Encontros românticos</h3>
+        <p class="occasion-desc">Para tocar no carro, enviar antes do encontro ou deixar de fundo durante o jantar. Discreta, pessoal e difícil de esquecer — ideal para o Dia dos Namorados.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="como-funciona">
+  <div class="container">
+    <p class="section-label">O processo</p>
+    <h2 class="section-title">Simples, <span class="tr">rápido</span> e sem achismos</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-content">
+          <h3>Descreva o tema e o contexto</h3>
+          <p>Conte para quem é, qual é a ocasião e o que você quer transmitir. Quanto mais detalhes, mais precisa será a entrega.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-content">
+          <h3>Escolha o estilo sonoro</h3>
+          <p>Rock, MPB, samba, pop, bossa nova, eletrônico, instrumental — você define o embalo. Pode indicar referências de artistas como guia de clima.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-content">
+          <h3>Informe as palavras-chave</h3>
+          <p>Palavras ou frases que precisam aparecer na letra ou no conceito da música. Nome da pessoa, mensagem central, slogan do negócio — o que for essencial.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <div class="step-content">
+          <h3>Aprovação e entrega</h3>
+          <p>Enviamos uma prévia para sua aprovação. Após o aceite, você recebe o arquivo final em até 48 horas. Pronto para usar onde quiser.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GENRES -->
+<section class="genres">
+  <div class="container">
+    <p class="section-label">Estilos disponíveis</p>
+    <h2 class="section-title">Qual é o seu <span class="tg">embalo</span>?</h2>
+  </div>
+  <div class="genres-marquee-wrap">
+    <div class="genres-track">
+      <span class="genre-pill pl">Rock</span>
+      <span class="genre-pill pr">MPB</span>
+      <span class="genre-pill pg">Samba</span>
+      <span class="genre-pill pl">Bossa Nova</span>
+      <span class="genre-pill pr">Pop</span>
+      <span class="genre-pill pg">Eletrônico</span>
+      <span class="genre-pill pl">Baião</span>
+      <span class="genre-pill pr">Forró</span>
+      <span class="genre-pill pg">Instrumental</span>
+      <span class="genre-pill pl">Pagode</span>
+      <span class="genre-pill pr">Axé</span>
+      <span class="genre-pill pg">Reggae</span>
+      <span class="genre-pill pl">Jazz</span>
+      <span class="genre-pill pr">Lofi</span>
+      <span class="genre-pill pg">Funk</span>
+      <span class="genre-pill pl">Gospel</span>
+      <!-- loop -->
+      <span class="genre-pill pl">Rock</span>
+      <span class="genre-pill pr">MPB</span>
+      <span class="genre-pill pg">Samba</span>
+      <span class="genre-pill pl">Bossa Nova</span>
+      <span class="genre-pill pr">Pop</span>
+      <span class="genre-pill pg">Eletrônico</span>
+      <span class="genre-pill pl">Baião</span>
+      <span class="genre-pill pr">Forró</span>
+      <span class="genre-pill pg">Instrumental</span>
+      <span class="genre-pill pl">Pagode</span>
+      <span class="genre-pill pr">Axé</span>
+      <span class="genre-pill pg">Reggae</span>
+      <span class="genre-pill pl">Jazz</span>
+      <span class="genre-pill pr">Lofi</span>
+      <span class="genre-pill pg">Funk</span>
+      <span class="genre-pill pl">Gospel</span>
+    </div>
+  </div>
+  <div class="container">
+    <p class="genres-note">Não encontrou o estilo que procura? Descreva e adaptamos. Também trabalhamos com fusões e referências específicas de artistas.</p>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pacotes">
+  <div class="container">
+    <p class="section-label">Pacotes</p>
+    <h2 class="section-title">Escolha a <span class="tl">escala</span> certa</h2>
+    <p style="font-size:0.93rem;font-weight:300;color:rgba(46,34,64,0.55);max-width:460px;line-height:1.75;margin-bottom:0.5rem;">
+      Todos os pacotes incluem aprovação prévia e entrega em até 48 horas após confirmação.
+    </p>
+
+    <div class="pricing-grid">
+
+      <!-- Solo -->
+      <div class="price-card">
+        <div class="price-stripe ps-rose"></div>
+        <p class="price-label pl-rose">Pacote</p>
+        <h3 class="price-name">Solo</h3>
+        <p class="price-qty">1 música original</p>
+        <div class="price-value">
+          <p class="price-from">Por apenas</p>
+          <div class="price-amount pa-rose"><sup>R$</sup> 39<span style="font-size:1.4rem">,90</span></div>
+        </div>
+        <ul class="price-features pf-rose">
+          <li>1 música 100% original</li>
+          <li>Estilo à sua escolha</li>
+          <li>Palavras-chave incluídas</li>
+          <li>1 rodada de ajuste</li>
+          <li>Arquivo em MP3 e WAV</li>
+          <li>Entrega em até 48h</li>
+        </ul>
+        <a href="#contato" class="price-cta pc-rose-outline">Pedir agora</a>
+      </div>
+
+      <!-- Quinteto (destaque) -->
+      <div class="price-card featured-lilac">
+        <span class="featured-badge">Mais pedido</span>
+        <div class="price-stripe ps-lilac"></div>
+        <p class="price-label pl-lilac">Pacote</p>
+        <h3 class="price-name">Quinteto</h3>
+        <p class="price-qty">5 músicas originais</p>
+        <div class="price-value">
+          <p class="price-from">Por apenas</p>
+          <div class="price-amount pa-lilac"><sup>R$</sup> 179<span style="font-size:1.4rem">,90</span></div>
+        </div>
+        <ul class="price-features pf-lilac">
+          <li>5 músicas 100% originais</li>
+          <li>Estilos variados ou fixos</li>
+          <li>Palavras-chave por música</li>
+          <li>2 rodadas de ajuste por música</li>
+          <li>Arquivos em MP3 e WAV</li>
+          <li>Entrega em até 48h por faixa</li>
+          <li>Uso comercial liberado</li>
+        </ul>
+        <a href="#contato" class="price-cta pc-lilac-solid">Pedir agora</a>
+      </div>
+
+      <!-- Repertório -->
+      <div class="price-card">
+        <div class="price-stripe ps-green"></div>
+        <p class="price-label pl-green">Pacote</p>
+        <h3 class="price-name">Repertório</h3>
+        <p class="price-qty">10 músicas originais</p>
+        <div class="price-value">
+          <p class="price-from">Por apenas</p>
+          <div class="price-amount pa-green"><sup>R$</sup> 349<span style="font-size:1.4rem">,90</span></div>
+        </div>
+        <ul class="price-features pf-green">
+          <li>10 músicas 100% originais</li>
+          <li>Identidade sonora completa</li>
+          <li>Planejamento de estilos incluso</li>
+          <li>3 rodadas de ajuste por música</li>
+          <li>Arquivos em MP3 e WAV</li>
+          <li>Entrega em até 48h por faixa</li>
+          <li>Uso comercial liberado</li>
+          <li>Prioridade no atendimento</li>
+        </ul>
+        <a href="#contato" class="price-cta pc-green-outline">Pedir agora</a>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- DIFFERENTIALS -->
+<section class="differentials">
+  <div class="container">
+    <p class="section-label">Por que escolher</p>
+    <h2 class="section-title">O que nos <span class="tr">diferencia</span></h2>
+    <div class="diff-grid">
+      <div class="diff-item">
+        <div class="diff-dot dd-l"></div>
+        <div class="diff-number dn-l">48h</div>
+        <h3 class="diff-title">Entrega garantida</h3>
+        <p class="diff-desc">Após sua aprovação da proposta, a música chega em até 48 horas. Sem enrolação, sem prazo vago.</p>
+      </div>
+      <div class="diff-item">
+        <div class="diff-dot dd-r"></div>
+        <div class="diff-number dn-r">0%</div>
+        <h3 class="diff-title">Sem desafinar</h3>
+        <p class="diff-desc">Tecnologia de geração musical com afinação controlada. Nenhuma nota torta, nenhum som amador.</p>
+      </div>
+      <div class="diff-item">
+        <div class="diff-dot dd-g"></div>
+        <div class="diff-number dn-g">100%</div>
+        <h3 class="diff-title">Original e exclusiva</h3>
+        <p class="diff-desc">Cada música é gerada do zero para o seu pedido. Não existe igual em lugar nenhum.</p>
+      </div>
+      <div class="diff-item">
+        <div class="diff-dot dd-l"></div>
+        <div class="diff-number dn-l">∞</div>
+        <h3 class="diff-title">Uso sem restrição</h3>
+        <p class="diff-desc">Nos pacotes comerciais, você usa no seu negócio, redes sociais ou plataformas digitais sem pagar royalties.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-final" id="contato">
+  <div class="cta-blob-1"></div>
+  <div class="cta-blob-2"></div>
+  <h2>Pronto para ter a <span class="tl">sua</span> música?</h2>
+  <p>Descreva o momento, escolha o estilo, informe as palavras-chave. O resto é com a gente.</p>
+  <div class="cta-final-btns">
+    <a href="https://instagram.com/duasvozesdii" class="btn-primary" target="_blank">
+      <svg style="display:inline;vertical-align:-3px;margin-right:7px;" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+      Instagram · @duasvozesdii
+    </a>
+    <a href="mailto:duasvozesdii@gmail.com" class="btn-ghost">duasvozesdii@gmail.com</a>
+  </div>
+  <p style="font-size:0.82rem;color:rgba(46,34,64,0.45);margin-top:1.2rem;position:relative;z-index:2;">
+    Mande uma DM no Instagram descrevendo o pedido — respondemos em até 24h.
+  </p>
+  <p class="delivery-tag">✦ Entrega em até 48h após aprovação ✦</p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p class="footer-brand">SONORA IA</p>
+  <p>Músicas originais criadas com inteligência artificial · <a href="https://instagram.com/duasvozesdii" target="_blank" style="color:var(--lilac-mid);text-decoration:none;">@duasvozesdii</a> · duasvozesdii@gmail.com</p>
+</footer>
+
+</body>
+</html>
